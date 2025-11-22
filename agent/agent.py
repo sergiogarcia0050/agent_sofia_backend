@@ -20,7 +20,7 @@ class Assistant(Agent):
         super().__init__(
             instructions=SOFIA_SYSTEM_PROMPT,
             tools=[
-                register_candidate,
+                # register_candidate, deprecated
                 # Aquí irán las demás tools cuando las agregues
             ]
         )

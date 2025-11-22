@@ -15,6 +15,9 @@ SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY")
 # Crear cliente Supabase
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
 
+print("Supabase client initialized for register_candidate tool.")
+
+
 
 @function_tool
 async def register_candidate(
@@ -41,6 +44,8 @@ async def register_candidate(
         
         response = supabase.table("candidates").insert(candidate_data).execute()
         
+        print("Supabase insert response:", response)
+
         if response.data and len(response.data) > 0:
             candidate = response.data[0]
             return {
