@@ -1,21 +1,19 @@
-
+# tools/register_candidate.py
 from typing import Dict, Any
 from livekit.agents import function_tool
-from supabase import Client
+from supabase import create_client, Client
 import os
 from dotenv import load_dotenv
-from supabase import create_client
 
-# tools
-# agent.py
-
+# Cargar archivo .env
 load_dotenv()
 
-# Cliente Supabase global
-supabase: Client = create_client(
-    os.getenv("SUPABASE_URL"),
-    os.getenv("SUPABASE_KEY")
-)
+# Leer variables
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY")
+
+# Crear cliente Supabase
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
 
 
 @function_tool
@@ -34,7 +32,6 @@ async def register_candidate(
         Dict con el resultado de la operación incluyendo candidate_id
     """
     try:
-        # Datos del candidato
         candidate_data = {
             "name": candidate_name,
             "email": candidate_email,
@@ -42,7 +39,6 @@ async def register_candidate(
             "approved": False
         }
         
-        # Insertar en Supabase
         response = supabase.table("candidates").insert(candidate_data).execute()
         
         if response.data and len(response.data) > 0:
@@ -53,7 +49,7 @@ async def register_candidate(
                 "name": candidate["name"],
                 "email": candidate["email"],
                 "status": candidate["status"],
-                "message": f"Candidato {candidate_name} registrado exitosamente con ID: {candidate['id']}"
+                "message": f"Candidato {candidate_name} registrado exitosamente"
             }
         else:
             return {
@@ -65,12 +61,11 @@ async def register_candidate(
     except Exception as e:
         error_message = str(e)
         
-        # Manejo específico de errores comunes
         if "duplicate key value violates unique constraint" in error_message:
             return {
                 "success": False,
                 "error": "duplicate_email",
-                "message": f"El email {candidate_email} ya está registrado en el sistema"
+                "message": f"El email {candidate_email} ya está registrado"
             }
         
         return {
