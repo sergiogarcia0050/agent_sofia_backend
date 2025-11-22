@@ -21,6 +21,6 @@ def read_root():
 
 @app.get("/users")
 def get_users():
-    """Ejemplo: obtener datos de la tabla users"""
+    """Ejemplo: obtener datos de la tabla users'"""
     data = supabase.table("users").select("*").execute()
     return data.data
