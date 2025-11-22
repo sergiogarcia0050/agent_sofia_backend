@@ -3,7 +3,7 @@ import os
 from dotenv import load_dotenv
 
 from livekit import agents
-from livekit.agents import Agent, AgentSession, WorkerOptions, cli
+from livekit.agents import Agent, AgentSession
 from livekit.plugins import openai, deepgram, cartesia, silero
 
 # Importar el system prompt
@@ -69,9 +69,3 @@ async def entrypoint(ctx: agents.JobContext):
             await session.stop()
         except Exception:
             pass
-
-
-if __name__ == "__main__":
-    cli.run_app(WorkerOptions(entrypoint_fnc=entrypoint))
-# Para ejecutar:
-# uv run python agent.py dev
