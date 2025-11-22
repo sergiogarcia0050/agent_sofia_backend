@@ -10,7 +10,7 @@ from livekit.plugins import openai, deepgram, cartesia, silero
 from prompts.sofia_prompt import SOFIA_SYSTEM_PROMPT
 
 # Importar la tool de registro
-from tools.register_candidate import register_candidate
+from tools.get_evaluation_criteria import get_evaluation_criteria
 
 load_dotenv()
 
@@ -21,7 +21,7 @@ class Assistant(Agent):
             instructions=SOFIA_SYSTEM_PROMPT,
             tools=[
                 # register_candidate, deprecated
-                # Aquí irán las demás tools cuando las agregues
+                get_evaluation_criteria,
             ]
         )
 

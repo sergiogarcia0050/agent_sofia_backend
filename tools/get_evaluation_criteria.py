@@ -1,5 +1,5 @@
-# tools/register_candidate.py
-from typing import Dict, Any
+# tools/get_evaluation_criteria.py
+from typing import Dict, Any, List
 from livekit.agents import function_tool
 from supabase import create_client, Client
 import os
@@ -12,27 +12,61 @@ load_dotenv()
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY")
 
-
 # Crear cliente Supabase
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
 
-print("Supabase client initialized for register_candidate tool.")
+print("Supabase client initialized for get_evaluation_criteria tool.")
+
 
 @function_tool
-async def get_evaluation_criteria(
-) -> Dict[str, Any]:
+async def get_evaluation_criteria() -> Dict[str, Any]:
     """
-    OBTIENE INFORMACIÓN DE EVALUACIÓN (obligatorio antes de evaluar):
-   - LLAMA: get_evaluation_criteria()
-   - Esta tool te devolverá en UN SOLO LLAMADO toda la información que necesitas:
-     * Las preguntas específicas organizadas por área (HTML, CSS, JavaScript, Tools)
-     * Los criterios de evaluación que debes aplicar
-     * Los pesos de cada área
-     * Los umbrales de aprobación (thresholds) para cada área
-     * La escala de puntajes a usar (0-100 con sus descripciones)
-     * Las respuestas esperadas o guías de evaluación
-     * Cualquier instrucción adicional sobre cómo evaluar
-   - Usa EXACTAMENTE estas preguntas, criterios y escala de puntajes para toda la entrevista
-   - NO inventes preguntas, criterios ni escalas propias
-
+    Obtiene las preguntas de evaluación desde la base de datos.
+    
+    Returns:
+        Dict con las preguntas organizadas por área (topic)
     """
+    try:
+        # Obtener todas las preguntas ordenadas
+        response = supabase.table("evaluation_criteria").select("*").order("difficulty").execute()
+        
+        if not response.data:
+            return {
+                "success": False,
+                "error": "no_questions_found",
+                "message": "No se encontraron preguntas en la base de datos"
+            }
+        
+        # Organizar preguntas por área (topic)
+        questions_by_area = {
+            "React": [],
+            "Next.js": [],
+            "TanStack": []
+        }
+        
+        for question in response.data:
+            area = question.get("topic", "").lower()
+            
+            if area in questions_by_area:
+                questions_by_area[area].append({
+                    "id": question.get("id"),
+                    "question": question.get("question"),
+                    "order": question.get("difficulty"),
+                })
+        
+        # Contar total de preguntas
+        total_questions = sum(len(questions) for questions in questions_by_area.values())
+        
+        return {
+            "success": True,
+            "questions": questions_by_area,
+            "total_questions": total_questions,
+            "message": f"Se cargaron {total_questions} preguntas exitosamente"
+        }
+            
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "message": f"Error al obtener preguntas: {str(e)}"
+        }
