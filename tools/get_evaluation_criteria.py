@@ -21,50 +21,59 @@ print("Supabase client initialized for get_evaluation_criteria tool.")
 @function_tool
 async def get_evaluation_criteria() -> Dict[str, Any]:
     """
-    Obtiene las preguntas de evaluación desde la base de datos.
+    Obtiene las preguntas de evaluación activas desde la base de datos.
     
     Returns:
-        Dict con las preguntas organizadas por área (topic)
+        Dict con las preguntas organizadas por área (topic) y ordenadas por dificultad
     """
     try:
-        # Obtener todas las preguntas ordenadas
-        response = supabase.table("evaluation_criteria").select("*").order("difficulty").execute()
+        # Obtener solo preguntas activas, ordenadas por dificultad
+        response = supabase.table("evaluation_criteria") \
+            .select("*") \
+            .eq("is_active", True) \
+            .order("difficulty", desc=False) \
+            .execute()
         
         if not response.data:
             return {
                 "success": False,
                 "error": "no_questions_found",
-                "message": "No se encontraron preguntas en la base de datos"
+                "message": "No se encontraron preguntas activas en la base de datos"
             }
         
         # Organizar preguntas por área (topic)
-        questions_by_area = {
-            "React": [],
-            "Next.js": [],
-            "TanStack": []
-        }
+        questions_by_topic = {}
         
         for question in response.data:
-            area = question.get("topic", "").lower()
+            topic = question.get("topic", "Unknown")
             
-            if area in questions_by_area:
-                questions_by_area[area].append({
-                    "id": question.get("id"),
-                    "question": question.get("question"),
-                    "order": question.get("difficulty"),
-                })
+            # Crear la lista para el topic si no existe
+            if topic not in questions_by_topic:
+                questions_by_topic[topic] = []
+            
+            questions_by_topic[topic].append({
+                "id": question.get("id"),
+                "question": question.get("question"),
+                "difficulty": question.get("difficulty"),
+                "topic": topic
+            })
         
         # Contar total de preguntas
-        total_questions = sum(len(questions) for questions in questions_by_area.values())
+        total_questions = len(response.data)
+        
+        # Crear resumen por topic
+        topics_summary = {topic: len(questions) for topic, questions in questions_by_topic.items()}
         
         return {
             "success": True,
-            "questions": questions_by_area,
+            "questions": questions_by_topic,
             "total_questions": total_questions,
-            "message": f"Se cargaron {total_questions} preguntas exitosamente"
+            "topics_summary": topics_summary,
+            "message": f"Se cargaron {total_questions} preguntas activas exitosamente. Topics: {', '.join([f'{t} ({c})' for t, c in topics_summary.items()])}"
         }
             
     except Exception as e:
+        print(f"❌ Error en get_evaluation_criteria: {str(e)}")
         return {
             "success": False,
             "error": str(e),

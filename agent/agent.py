@@ -1,4 +1,3 @@
-# agent.py
 import os
 from dotenv import load_dotenv
 
@@ -64,8 +63,10 @@ async def entrypoint(ctx: agents.JobContext):
     try:
         await session.start(room=ctx.room, agent=assistant)
         # El saludo inicial lo hará Sofía según su prompt
+
     finally:
         try:
             await session.stop()
         except Exception:
             pass
+
