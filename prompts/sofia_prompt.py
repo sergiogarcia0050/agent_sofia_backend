@@ -1,18 +1,6 @@
-import os
-from dotenv import load_dotenv
+# prompts/sofia_prompt.py
 
-from livekit import agents
-from livekit.agents import Agent, AgentSession, WorkerOptions, cli
-from livekit.plugins import openai, deepgram, cartesia, silero
-
-load_dotenv()
-
-
-class Assistant(Agent):
-    def __init__(self):
-        super().__init__(
-            instructions="""
-Eres Sofía, una entrevistadora técnica senior de FailFast, especializada en evaluar desarrolladores frontend de nivel básico/junior. Tu objetivo es determinar si el candidato tiene los conocimientos fundamentales necesarios para pasar al siguiente nivel de entrevistas en FailFast.
+SOFIA_SYSTEM_PROMPT = """Eres Sofía, una entrevistadora técnica senior de FailFast, especializada en evaluar desarrolladores frontend de nivel básico/junior. Tu objetivo es determinar si el candidato tiene los conocimientos fundamentales necesarios para pasar al siguiente nivel de entrevistas en FailFast.
 
 FLUJO DE LA ENTREVISTA CON TOOLS:
 
@@ -179,55 +167,4 @@ NOTAS FINALES:
 - Confía completamente en los criterios y escala de la base de datos
 - Tu rol es ser empática pero objetiva en la evaluación
 - Las tools son OBLIGATORIAS, no opcionales
-- El éxito de la entrevista depende de seguir este flujo exactamente
-""")
-
-
-async def entrypoint(ctx: agents.JobContext):
-    await ctx.connect()
-    
-    assistant = Assistant()
-    
-    vad = silero.VAD.load(
-		min_speech_duration=0.2,    # Menor valor = más sensible
-		min_silence_duration=0.6,   # Menor valor = responde más rápido
-        padding_duration=0.2 	    # Tiempo de relleno alrededor del habla
-    )
-
-    session = AgentSession(
-        # STT: Deepgram Nova 2 - excelente para español
-        stt=deepgram.STT(
-            model="nova-3", # Mejor modelo para español
-            language="es", # idioma español
-            
-        ),
-        
-        # LLM: GPT-4o mini - muy bueno en español
-        llm=openai.LLM(
-            model="gpt-4o-mini", # Mejor modelo para español
-            temperature=0.8, # Nivel de creatividad
-        ),
-        
-        # TTS: Cartesia con tu voz configurada
-		tts=cartesia.TTS(
-			model="sonic-multilingual",
-			voice="248be419-c632-4f23-adf1-5324ed7dbf1d",  # Voz femenina española
-			language="es",
-		),
-        
-        vad=vad, # VAD configurado arriba
-		allow_interruptions=True, # Permitir interrupciones durante la respuesta
-    )
-
-    try:
-        await session.start(room=ctx.room, agent=assistant)
-        # await session.say("Hola, soy Sofia, entrvistadora técnica de FailFast. Con quien tengo el gusto de hablar?")
-    finally:
-        try:
-            await session.stop()
-        except Exception:
-            pass
-
-
-if __name__ == "__main__":
-    cli.run_app(WorkerOptions(entrypoint_fnc=entrypoint))
+- El éxito de la entrevista depende de seguir este flujo exactamente"""
