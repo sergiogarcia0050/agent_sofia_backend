@@ -16,7 +16,7 @@ supabase = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
 # Listar todas las tablas disponibles
 try:
     # Intentar obtener datos
-    response = supabase.table("tech").select("*").limit(1).execute()
+    response = supabase.table("tech_questions").select("*").limit(1).execute()
     print(f"✅ Conexión exitosa. Datos: {response.data}")
 except Exception as e:
     print(f"❌ Error: {e}")

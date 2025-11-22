@@ -21,16 +21,15 @@ print("Supabase client initialized for get_evaluation_criteria tool.")
 @function_tool
 async def get_evaluation_criteria() -> Dict[str, Any]:
     """
-    Obtiene las preguntas de evaluación activas desde la base de datos.
+    Obtiene las preguntas de evaluación activas desde la base de datos con sus topics.
     
     Returns:
         Dict con las preguntas organizadas por área (topic) y ordenadas por dificultad
     """
     try:
-        # Obtener solo preguntas activas, ordenadas por dificultad
-        response = supabase.table("evaluation_criteria") \
-            .select("*") \
-            .eq("is_active", True) \
+        # Obtener preguntas con JOIN a la tabla tech para obtener el nombre del topic
+        response = supabase.table("tech_questions") \
+            .select("id, question, difficulty, tech, tech!inner(name)") \
             .order("difficulty", desc=False) \
             .execute()
         
@@ -45,7 +44,8 @@ async def get_evaluation_criteria() -> Dict[str, Any]:
         questions_by_topic = {}
         
         for question in response.data:
-            topic = question.get("topic", "Unknown")
+            # Obtener el nombre del topic desde la relación
+            topic = question.get("tech", {}).get("name", "Unknown") if question.get("tech") else "Unknown"
             
             # Crear la lista para el topic si no existe
             if topic not in questions_by_topic:
@@ -55,6 +55,7 @@ async def get_evaluation_criteria() -> Dict[str, Any]:
                 "id": question.get("id"),
                 "question": question.get("question"),
                 "difficulty": question.get("difficulty"),
+                "tech_id": question.get("tech"),  # ID numérico del tech
                 "topic": topic
             })
         
