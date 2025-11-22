@@ -2,6 +2,7 @@ import sys
 import uuid
 import json
 import requests
+import re
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urlparse
 from collections import deque
@@ -25,6 +26,26 @@ QDRANT_API_KEY = os.getenv("QDRANT_API_KEY")
 
 MAX_PAGES = 300
 CHUNK_TOKENS = 400
+
+
+# ==========================
+# UTILIDADES
+# ==========================
+
+def generate_filename_from_url(base_url: str) -> str:
+    """
+    Genera un nombre de archivo seguro basado en la URL base.
+    Ejemplo: https://docs.example.com -> docs_example_com.txt
+    """
+    parsed = urlparse(base_url)
+    domain = parsed.netloc or parsed.path
+    
+    # Limpiar el dominio para hacerlo válido como nombre de archivo
+    safe_name = re.sub(r'[^\w\-.]', '_', domain)
+    safe_name = re.sub(r'_+', '_', safe_name)  # Eliminar guiones bajos duplicados
+    safe_name = safe_name.strip('_')
+    
+    return f"helpers/{safe_name}.txt"
 
 
 # ==========================
@@ -190,7 +211,8 @@ def save_to_qdrant(scraped_pages: dict, collection: str):
                         vector=emb,
                         payload={
                             "url": url,
-                            "content": chunk
+                            "content": chunk,
+                            "topic": 'TanStack'
                         }
                     )
                 ]
@@ -239,7 +261,7 @@ if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("Uso:")
         print("  python crawler_v2.py <base_url> <start_path> <txt|qdrant>")
-        print("  python crawler_v2.py qdrant-txt")
+        print("  python crawler_v2.py qdrant-txt [filename.txt]")
         sys.exit(1)
 
     mode = sys.argv[-1].lower()  # El último argumento es siempre el modo
@@ -247,7 +269,11 @@ if __name__ == "__main__":
     if mode == "qdrant-txt":
         # Modo especial: solo leer del TXT y subir a Qdrant
         print(f"\n[INFO] Modo: {mode}\n")
-        scraped_from_file = load_from_txt("scraped_output.txt")
+        # Si se proporciona un nombre de archivo, usarlo; si no, usar el predeterminado
+        filename = sys.argv[1] if len(sys.argv) == 3 else "scraped_output.txt"
+        print(f"[INFO] Leyendo contenido desde {filename}...\n")
+        
+        scraped_from_file = load_from_txt(filename)
         save_to_qdrant(scraped_from_file, "sofia_ai")
     
     elif mode in ["txt", "qdrant"]:
@@ -267,7 +293,10 @@ if __name__ == "__main__":
         print(f"[INFO] Páginas encontradas: {len(scraped)}\n")
         
         if mode == "txt":
-            save_as_txt(scraped)
+            # Generar nombre de archivo basado en la URL
+            filename = generate_filename_from_url(base_url)
+            print(f"[INFO] Guardando como: {filename}\n")
+            save_as_txt(scraped, filename)
         elif mode == "qdrant":
             save_to_qdrant(scraped, "sofia_ai")
     
