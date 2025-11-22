@@ -53,7 +53,7 @@ async def entrypoint(ctx: agents.JobContext):
 if __name__ == "__main__":
     cli.run_app(WorkerOptions(entrypoint_fnc=entrypoint))
     
-
+# uv run python agent.py dev
 
 
 
