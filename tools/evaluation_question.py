@@ -1,8 +1,10 @@
 import requests
 from typing import Dict, Any
+from livekit.agents import function_tool
 
 
-def evaluation_question(response: str, topic: str) -> Dict[str, Any]:
+@function_tool
+async def evaluation_question(response: str, topic: str) -> Dict[str, Any]:
     """
     Evalúa la respuesta del usuario enviándola al webhook de evaluación.
     
@@ -49,10 +51,18 @@ def evaluation_question(response: str, topic: str) -> Dict[str, Any]:
 
 if __name__ == "__main__":
     # Ejemplo de uso
-    try:
-        result = evaluation_question("hola", "React")
-        print("Resultado de la evaluación:")
-        print(result)
-    except Exception as e:
-        print(f"Error: {e}")
+    import asyncio
+    
+    async def test():
+        try:
+            result = await evaluation_question(
+                "useCallback se usa para memorizar funciones y useMemo para valores computados",
+                "React"
+            )
+            print("Resultado de la evaluación:")
+            print(result)
+        except Exception as e:
+            print(f"Error: {e}")
+    
+    asyncio.run(test())
 

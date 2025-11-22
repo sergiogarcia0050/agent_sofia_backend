@@ -9,8 +9,9 @@ from livekit.plugins import openai, deepgram, elevenlabs, silero, tavus
 # Importar el system prompt
 from prompts.sofia_prompt import SOFIA_SYSTEM_PROMPT
 
-# Importar la tool de registro
+# Importar las tools
 from tools.get_evaluation_criteria import get_evaluation_criteria
+from tools.evaluation_question import evaluation_question
 
 load_dotenv()
 
@@ -26,6 +27,7 @@ class Assistant(Agent):
             tools=[
                 # register_candidate, deprecated
                 get_evaluation_criteria,
+                evaluation_question,
             ]
         )
 
