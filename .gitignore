@@ -1,6 +1,6 @@
 # Entorno virtual
 .venv/
-
+.git/
 # Variables de entorno
 .env
 
